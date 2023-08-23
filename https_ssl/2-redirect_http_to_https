@@ -33,16 +33,21 @@ defaults
         errorfile 503 /etc/haproxy/errors/503.http
         errorfile 504 /etc/haproxy/errors/504.http
 
-frontend www-http
-        bind *:80
-        mode http
-        default_backend web-backend
-frontend www-https
-    bind *:443 ssl crt /etc/letsencrypt/live/www.mutukupauline.tech/www.mutukupauline.tech.pem
-    http-request set-header X-Forwarded-Proto https
-    acl letsencrypt-acl path_beg /.well-known/acme-challenge/
-    use_backend letsencrypt-backend if letsencrypt-acl
-    default_backend web-backend
+frontend http-in
+         bind *:80
+         bind *:443 ssl crt /etc/letsencrypt/live/www.mutukupauline.tech/fullchain.pem
+         mode http
+         default_backend webservers
+
+frontend https_frontend
+         bind *:443 ssl crt /etc/letsencrypt/live/www.mutukupauline.tech/fullchain.pem
+         mode http
+         default_backend webservers
+
+frontend http_frontend
+         bind *:80
+         mode http
+         redirect scheme https code 301 if !{ ssl_fc }
 
 backend web-backend
         redirect scheme https unless { ssl_fc }
